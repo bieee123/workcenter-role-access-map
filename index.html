@@ -114,7 +114,7 @@ tbody tr:hover td:first-child{background:#fafcff}
     <div>
       <h1>Role Access Map</h1>
       <div class="subtitle">Workcenter Dashboard — access and permission overview</div>
-      <div class="branch"><span class="dot"></span> Branch: dev · Review access</div>
+      <div class="branch"><span class="dot"></span> Branch: dev · Updated permission semantics</div>
     </div>
   </div>
 
@@ -143,6 +143,20 @@ tbody tr:hover td:first-child{background:#fafcff}
       <span class="scope">SCOPE</span><span style="font-size:12px;padding-top:5px">Assigned workcenter only</span>
       <span class="self">SELF</span><span style="font-size:12px;padding-top:5px">Own data only</span>
       <span class="star">✓*</span><span style="font-size:12px;padding-top:5px">Approval page follows role stage</span>
+    </div>
+  </div>
+
+  <div class="card section" style="margin-top:18px">
+    <div class="section-head">
+      <div><div class="section-title">Detailed Permission Semantics</div><div class="section-desc">How each access symbol behaves in the application</div></div>
+    </div>
+    <div class="role-grid">
+      <div class="role-card"><div class="role-name">✓ — Full access</div><div class="role-desc">Role passes <code>requireUser([...])</code>, can open the page and perform all available actions. The menu also appears in the sidebar.</div></div>
+      <div class="role-card"><div class="role-name">– — Denied</div><div class="role-desc">Role is rejected by <code>requireUser</code>. Direct URL access redirects to <code>/access-denied</code> and the menu is hidden.</div></div>
+      <div class="role-card"><div class="role-name">✓* — Approval filtered</div><div class="role-desc">The approval page is accessible, but reports are filtered by role stage, decision status, and assigned workcenter where applicable.</div></div>
+      <div class="role-card"><div class="role-name">✓ (scope)</div><div class="role-desc">Only assigned workcenters. Applies to <strong>INSPECTOR</strong> and <strong>LEADER</strong>; assignments are configured by Admin in <code>/admin/users</code>.</div></div>
+      <div class="role-card"><div class="role-name">✓ (sendiri)</div><div class="role-desc">Only the user's own operator submission. OPERATOR can edit only <code>OperatorSubmission.userId</code> records created by the local application (<code>source_type = LOCAL_APP</code>).</div></div>
+      <div class="role-card"><div class="role-name">Approval filtering</div><div class="role-desc">INSPECTOR sees pending QC Inspector reports in assigned workcenters; PRODUCTION_SPV/LEADER see Draft reports. ADMIN and VIEWER have no approval stage, so their “Perlu tindakan saya” tab remains empty.</div></div>
     </div>
   </div>
 </section>
@@ -178,10 +192,10 @@ tbody tr:hover td:first-child{background:#fafcff}
     <div class="approval-grid">
       <div class="card section" style="box-shadow:none;margin:0">
         <ul class="list">
-          <li><strong>INSPECTOR</strong><br>INSPECTOR — memeriksa</li>
-          <li><strong>QC_SPV / QC_DEPT_HEAD</strong><br>QC</li>
-          <li><strong>PRODUCTION_SPV / PRODUCTION_DEPT_HEAD / LEADER</strong><br>PRODUCTION</li>
-          <li><strong>ADMIN / OPERATOR / VIEWER</strong><br>Tidak menyetujui — hanya melihat isi lingkupnya</li>
+          <li><strong>INSPECTOR</strong><br>INSPECTOR — memeriksa dan menyetujui tahap INSPECTOR.</li>
+          <li><strong>QC_SPV / QC_DEPT_HEAD</strong><br>QC — menyetujui tahap QC.</li>
+          <li><strong>PRODUCTION_SPV / PRODUCTION_DEPT_HEAD / LEADER</strong><br>PRODUCTION — menyetujui/tanda tangan tahap PRODUCTION.</li>
+          <li><strong>ADMIN / OPERATOR / VIEWER</strong><br>Tidak menyetujui; hanya melihat isi lingkupnya.</li>
         </ul>
       </div>
       <div class="card section" style="box-shadow:none;margin:0">
@@ -191,6 +205,15 @@ tbody tr:hover td:first-child{background:#fafcff}
         </div>
       </div>
     </div>
+    <div class="card section" style="box-shadow:none;margin-top:16px">
+      <div class="section-title" style="margin-bottom:10px">Approval Page Filtering</div>
+      <ul class="list">
+        <li><strong>ADMIN / VIEWER:</strong> no approval stage → “Perlu tindakan saya” is always empty.</li>
+        <li><strong>INSPECTOR:</strong> only reports at <em>Menunggu QC Inspector</em>, limited to assigned workcenters.</li>
+        <li><strong>PRODUCTION_SPV / LEADER:</strong> see reports with <em>Draft</em> status.</li>
+        <li><strong>All approval roles:</strong> only reports that have not yet been decided by that user are actionable.</li>
+      </ul>
+    </div>
   </div>
 </section>
 
@@ -198,9 +221,10 @@ tbody tr:hover td:first-child{background:#fafcff}
   <div class="card section">
     <div class="section-head"><div><div class="section-title">Account Creation</div><div class="section-desc">Who can create which roles</div></div></div>
     <div class="account-grid">
-      <div class="role-card"><div class="role-name">ADMIN</div><div class="role-desc">Can create all roles directly through <code>/admin/users</code> and send invitations for all roles.</div></div>
+      <div class="role-card"><div class="role-name">ADMIN</div><div class="role-desc">Can create and modify <strong>all roles</strong> directly through <code>/admin/users</code>, plus send invitations for all roles. Manages invitation permissions and workcenter assignments.</div></div>
       <div class="role-card"><div class="role-name">LEADER / PRODUCTION_SPV</div><div class="role-desc">Can create/invite <strong>Operator</strong> only through <code>/operator-invitations</code>.</div></div>
       <div class="role-card"><div class="role-name">Other roles</div><div class="role-desc">No account creation permission.</div></div>
+      <div class="role-card"><div class="role-name">Workcenter assignment</div><div class="role-desc"><strong>INSPECTOR</strong> and <strong>LEADER</strong> are assigned workcenter scopes managed by Admin in <code>/admin/users</code>.</div></div>
     </div>
   </div>
 </section>
@@ -214,6 +238,8 @@ tbody tr:hover td:first-child{background:#fafcff}
       <li>New account / credential change → redirected to <code>Ganti sandi</code>.</li>
       <li><strong>INSPECTOR & LEADER</strong> are restricted to assigned workcenters, configured through <code>/admin/users</code>.</li>
       <li><strong>Monitoring</strong> is available only to Admin, Leader, Prod SPV, Inspector, QC SPV, and QC Dept Head.</li>
+      <li><strong>Denied pages</strong> redirect the role to <code>/access-denied</code>, while the corresponding sidebar menu is hidden.</li>
+      <li><strong>OPERATOR edit scope:</strong> only own <code>OperatorSubmission.userId</code> records and only records with <code>source_type = LOCAL_APP</code>.</li>
     </ul>
   </div>
 </section>
@@ -228,7 +254,7 @@ tbody tr:hover td:first-child{background:#fafcff}
   </div>
 </section>
 
-<footer class="footer">Workcenter Dashboard · Role Access Map · Source: ROLE-ACCESS-MAP.md · Branch dev</footer>
+<footer class="footer">Workcenter Dashboard · Role Access Map · Source: ROLE-ACCESS-MAP.md · Branch dev · Updated</footer>
 </main>
 </div>
 </div>
