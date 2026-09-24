@@ -73,11 +73,25 @@ tbody tr:hover td:first-child{background:#fafcff}
 .footer{color:#98a2b3;font-size:11px;text-align:center;padding:8px 0 20px}
 .hidden{display:none!important}
 @media(max-width:1000px){
- .sidebar{display:none}.grid{grid-template-columns:repeat(2,1fr)}.role-grid{grid-template-columns:1fr 1fr}.approval-grid,.account-grid{grid-template-columns:1fr}
+ .layout{flex-direction:column}
+ .sidebar{width:100%;padding:10px 12px;position:sticky;top:68px;z-index:15}
+ .nav{display:flex;overflow-x:auto;gap:6px;padding-bottom:2px;scrollbar-width:thin}
+ .nav button{width:auto;flex:0 0 auto;white-space:nowrap;padding:9px 12px}
+ .nav-title{display:none}
+ .grid{grid-template-columns:repeat(2,1fr)}.role-grid{grid-template-columns:1fr 1fr}.approval-grid,.account-grid{grid-template-columns:1fr}
+ .table-wrap{-webkit-overflow-scrolling:touch}
 }
 @media(max-width:600px){
- .main{padding:17px}.topbar{padding:0 15px}.grid{grid-template-columns:1fr 1fr}.role-grid{grid-template-columns:1fr}
+ .topbar{height:auto;flex-wrap:wrap;gap:10px;padding:10px 15px;position:static}
+ .brand-mark{width:32px;height:32px}
+ .layout{min-height:0}
+ .sidebar{top:0}
+ .main{padding:17px}.grid{grid-template-columns:1fr 1fr}.role-grid{grid-template-columns:1fr}
+ .stat{padding:14px}.stat-value{font-size:22px}
+ h1{font-size:22px}
  .search{width:100%}.section-head{align-items:flex-start;flex-direction:column}
+ .flow{gap:6px}.arrow{padding:0 2px}
+ .top-actions{width:100%}.top-actions .btn{flex:1}
 }
 </style>
 </head>
@@ -219,12 +233,12 @@ tbody tr:hover td:first-child{background:#fafcff}
 
 <section id="accounts" class="hidden">
   <div class="card section">
-    <div class="section-head"><div><div class="section-title">Account Creation</div><div class="section-desc">Who can create which roles</div></div></div>
+    <div class="section-head"><div><div class="section-title">Account Creation</div><div class="section-desc">Who can create accounts and send invitations</div></div></div>
     <div class="account-grid">
-      <div class="role-card"><div class="role-name">ADMIN</div><div class="role-desc">Can create and modify <strong>all roles</strong> directly through <code>/admin/users</code>, plus send invitations for all roles. Manages invitation permissions and workcenter assignments.</div></div>
-      <div class="role-card"><div class="role-name">LEADER / PRODUCTION_SPV</div><div class="role-desc">Can create/invite <strong>Operator</strong> only through <code>/operator-invitations</code>.</div></div>
-      <div class="role-card"><div class="role-name">Other roles</div><div class="role-desc">No account creation permission.</div></div>
+      <div class="role-card"><div class="role-name">ADMIN</div><div class="role-desc">The <strong>only</strong> role that can create and modify <strong>all role</strong> accounts through <code>/admin/users</code> and send invitations through <code>/operator-invitations</code>. Also manages invitation permissions and workcenter assignments.</div></div>
+      <div class="role-card"><div class="role-name">Other roles</div><div class="role-desc">No account creation or invitation permission.</div></div>
       <div class="role-card"><div class="role-name">Workcenter assignment</div><div class="role-desc"><strong>INSPECTOR</strong> and <strong>LEADER</strong> are assigned workcenter scopes managed by Admin in <code>/admin/users</code>.</div></div>
+      <div class="role-card"><div class="role-name">Password / PIN</div><div class="role-desc">Every role can change its own password / PIN via <code>/profile/password</code>.</div></div>
     </div>
   </div>
 </section>
@@ -237,7 +251,9 @@ tbody tr:hover td:first-child{background:#fafcff}
       <li>Login role pemeriksa <strong>(Leader / Prod SPV / Inspector / QC)</strong> without signature → redirected to <code>Tanda tangan</code>.</li>
       <li>New account / credential change → redirected to <code>Ganti sandi</code>.</li>
       <li><strong>INSPECTOR & LEADER</strong> are restricted to assigned workcenters, configured through <code>/admin/users</code>.</li>
-      <li><strong>Monitoring</strong> is available only to Admin, Leader, Prod SPV, Inspector, QC SPV, and QC Dept Head.</li>
+      <li><strong>Monitoring &amp; Data produksi</strong> are available only to Admin, Leader (scope), Prod SPV, Inspector (scope), and QC SPV.</li>
+      <li><strong>Laporan</strong> is available only to Admin, Leader (scope), Prod SPV, Prod Head, Inspector (scope), QC SPV, and QC Head.</li>
+      <li><strong>Jejak keputusan</strong> is available only to Admin.</li>
       <li><strong>Denied pages</strong> redirect the role to <code>/access-denied</code>, while the corresponding sidebar menu is hidden.</li>
       <li><strong>OPERATOR edit scope:</strong> only own <code>OperatorSubmission.userId</code> records and only records with <code>source_type = LOCAL_APP</code>.</li>
     </ul>
@@ -274,17 +290,17 @@ const roles = [
 
 const rows = [
 ["Input produksi","/operator",["–","–","–","–","–","–","–","✓","–"]],
-["Undangan operator","/operator-invitations",["✓","✓","✓","–","–","–","–","–","–"]],
+["Undangan operator","/operator-invitations",["✓","–","–","–","–","–","–","–","–"]],
 ["Ringkasan","/dashboard",["✓","✓","✓","✓","✓","✓","✓","–","✓"]],
-["Monitoring","/monitoring",["✓","✓","✓","–","✓","✓","✓","–","–"]],
-["Data produksi","/entries",["✓","✓","✓","✓","✓","✓","✓","–","✓"]],
-["Laporan","/reports",["✓","✓","✓","✓","✓","✓","✓","–","✓"]],
+["Monitoring","/monitoring",["✓","✓ scope","✓","–","✓ scope","✓","–","–","–"]],
+["Data produksi","/entries",["✓","✓ scope","✓","–","✓ scope","✓","–","–","–"]],
+["Laporan","/reports",["✓","✓ scope","✓","✓","✓ scope","✓","✓","–","–"]],
 ["Buat laporan","/reports/generate",["–","✓","✓","–","–","–","–","–","–"]],
 ["Persetujuan","/approvals",["✓*","✓*","✓*","✓*","✓*","✓*","✓*","–","✓*"]],
 ["Tanda tangan","/profile/signature",["–","✓","✓","✓","✓","✓","✓","–","–"]],
 ["Ganti sandi / PIN","/profile/password",["✓","✓","✓","✓","✓","✓","✓","✓","✓"]],
 ["Audit operator","/audit",["✓","–","–","–","–","✓","✓","–","–"]],
-["Jejak keputusan","/workflow-audit",["✓","–","✓","✓","✓","✓","✓","–","–"]],
+["Jejak keputusan","/workflow-audit",["✓","–","–","–","–","–","–","–","–"]],
 ["Edit produksi","/production-edit",["–","✓ scope","✓","–","✓ scope","✓","–","✓ self","–"]],
 ["Pengguna & akses","/admin/users",["✓","–","–","–","–","–","–","–","–"]]
 ];
